@@ -1,0 +1,10 @@
+{
+  "material": "minecraft:resin",
+  "effects": [
+    {
+      "type": "trimeffectively:xp_gain",
+      "trigger": "trimeffectively:xp_gain",
+      "amount": { "value": 1.0, "stack": "per_piece" }
+    }
+  ]
+}

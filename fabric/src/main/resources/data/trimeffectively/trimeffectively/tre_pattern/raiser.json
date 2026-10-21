@@ -1,0 +1,10 @@
+{
+  "pattern": "minecraft:raiser",
+  "effects": [
+    {
+      "type": "trimeffectively:breed_cooldown",
+      "trigger": "trimeffectively:breed",
+      "amount": { "value": -0.20, "stack": "per_piece" }
+    }
+  ]
+}

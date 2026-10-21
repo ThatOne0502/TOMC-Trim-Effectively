@@ -1,0 +1,10 @@
+{
+  "pattern": "minecraft:flow",
+  "effects": [
+    {
+      "type": "trimeffectively:extra_jumps",
+      "trigger": "trimeffectively:equipped",
+      "count": { "value": 1, "stack": "per_piece" }
+    }
+  ]
+}

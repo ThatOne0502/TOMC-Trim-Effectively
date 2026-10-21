@@ -1,0 +1,12 @@
+{
+  "material": "minecraft:copper",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:armor_toughness",
+      "operation": "add_value",
+      "amount": { "value": 2 }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "pattern": "minecraft:ward",
+  "effects": [
+    {
+      "type": "trimeffectively:damage_type_override",
+      "trigger": "trimeffectively:attack_out",
+      "damage_type": "minecraft:sonic_boom",
+      "keep_attacker": true
+    },
+    {
+      "type": "trimeffectively:annotate_sound",
+      "trigger": "trimeffectively:sound_emitted",
+      "client": true,
+      "radius": { "value": 8 },
+      "exclude_own": true,
+      "blocked_by": "minecraft:wool",
+      "particle": "minecraft:vibration",
+      "label": {
+        "subtitle": true,
+        "visible_ticks": 40,
+        "fade_ticks": 60,
+        "see_through": true,
+        "billboard": "center"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "pattern": "minecraft:rib",
+  "effects": [
+    {
+      "type": "trimeffectively:damage_out",
+      "trigger": "trimeffectively:attack_out",
+      "amount": { "value": 0.20, "per": ["harmful_effect_count"], "stack": "per_piece" }
+    }
+  ]
+}

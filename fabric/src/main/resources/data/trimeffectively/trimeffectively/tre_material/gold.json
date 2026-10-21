@@ -1,0 +1,16 @@
+{
+  "material": "minecraft:gold",
+  "effects": [
+    {
+      "type": "trimeffectively:item_property",
+      "properties": {
+        "piglin_loved": true
+      }
+    },
+    {
+      "type": "trimeffectively:piglin_neutral",
+      "trigger": "trimeffectively:equipped",
+      "also_brutes": true
+    }
+  ]
+}

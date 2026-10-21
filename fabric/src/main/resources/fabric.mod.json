@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "trimeffectively",
+  "version": "${version}",
+  "name": "TOMC-Trim Effectively",
+  "description": "Unique effects for trim smithing - each pattern or material carries its own way.\n\nDevelopment assisted by DeepSeek Harness(deepseek-flash).",
+  "authors": ["ThatOne"],
+  "license": "GPL-3.0-or-later",
+  "icon": "assets/trimeffectively/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["io.github.thatone0502.trimeffectively.Trimeffectively"],
+    "client": ["io.github.thatone0502.trimeffectively.TrimeffectivelyClient"],
+    "modmenu": ["io.github.thatone0502.trimeffectively.client.TreMenuIntegration"]
+  },
+  "mixins": ["trimeffectively.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*",
+    "cloth-config": "*"
+  }
+}

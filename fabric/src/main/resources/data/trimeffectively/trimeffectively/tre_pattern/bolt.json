@@ -1,0 +1,12 @@
+{
+  "pattern": "minecraft:bolt",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:knockback_resistance",
+      "operation": "add_value",
+      "amount": { "value": 0.15 }
+    }
+  ]
+}

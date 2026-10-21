@@ -1,0 +1,19 @@
+{
+  "material": "minecraft:redstone",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:attack_speed",
+      "operation": "add_value",
+      "amount": { "value": 1 }
+    },
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:block_break_speed",
+      "operation": "add_value",
+      "amount": { "value": 1 }
+    }
+  ]
+}

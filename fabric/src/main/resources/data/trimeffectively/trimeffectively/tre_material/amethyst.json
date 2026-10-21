@@ -1,0 +1,12 @@
+{
+  "material": "minecraft:amethyst",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:movement_speed",
+      "operation": "add_multiplied_base",
+      "amount": { "value": 1.0, "per": ["missing_health_ratio"], "stack": "per_piece" }
+    }
+  ]
+}

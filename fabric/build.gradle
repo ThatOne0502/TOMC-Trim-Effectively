@@ -1,0 +1,90 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version "1.17.19"
+    id 'maven-publish'
+}
+
+group = "io.github.thatone0502.trimeffectively"
+
+// ---------------------------------------------------------------------------
+// 构建命名：tomc-<modid>-<maj>.<min>.<rev>.<build>-<platform>+mc<mcver>.jar
+// 例：tomc-trimeffectively-0.1.0.1-fabric+mc1.21.11.jar
+//
+// 版本号前三段由人工维护；第四段（构建次数）自动累计。
+// 计数存在项目根的 build-count.txt，相对 build/ 目录独立，clean 不会重置。
+// 语义：一次「成功的」构建消耗一个号段（remapJar 成功产出后才写回），
+// 构建失败不计数，下次重试拿同一个号。
+// ---------------------------------------------------------------------------
+ext.mcVersion = '1.21.11'
+ext.platform = 'fabric'
+ext.baseVersion = '0.1.0'
+
+def countFile = file('build-count.txt')
+def buildNumber = (countFile.exists() ? countFile.text.trim().toInteger() : 0) + 1
+def fullVersion = "${baseVersion}.${buildNumber}"
+
+version = fullVersion
+
+def artifactName = "tomc-trimeffectively-${fullVersion}-${platform}+mc${mcVersion}"
+
+repositories {
+    // Cloth Config 的官方仓库（配置页前置）。
+    maven { url "https://maven.shedaniel.me/" }
+    // Mod Menu 的官方仓库（软依赖）。
+    maven { url "https://maven.terraformersmc.com/releases/" }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${mcVersion}"
+    // 官方 Mojang 映射（mojmap）：Fabric 1.x 时代全用 mojmap，不用 yarn。
+    // 注意：mojmap 工程里类名是 BuiltInRegistries/Item.Properties/CommandSourceStack 等，
+    // 与社区教程常见的 Yarn 名（Registries/Item.Settings/ServerCommandSource）不同，勿混用。
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:0.19.3"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.141.6+${mcVersion}"
+    // 配置页：Cloth Config。21.11.x 是 1.21.11 线；只在打开配置页时才会加载，
+    // 没装它的玩家照常进游戏（我们的模组本体不引用它）。
+    modImplementation "me.shedaniel.cloth:cloth-config-fabric:21.11.160"
+    // Mod Menu：软依赖，仅编译期可见。17.0.1 是 1.21.11 线的发布版。
+    // 它自己的依赖里就带 Cloth Config，所以「装了 Mod Menu」几乎必然「有 Cloth」。
+    modCompileOnly "com.terraformersmc:modmenu:17.0.1"
+}
+
+processResources {
+    // 把完整版本号（含构建次数）展开进 fabric.mod.json 与任何带 ${version} 的资源。
+    inputs.property "version", fullVersion
+    filesMatching('fabric.mod.json') {
+        expand "version": fullVersion
+    }
+}
+
+// 目标 Java 版本用 toolchain 声明：环境 JDK 低于目标（例如环境是 17、目标是 21）时，
+// 只有 toolchain 会让 foojay 自动 provision 对应 JDK，否则 javac 报「不支持发行版本」。
+java {
+    withSourcesJar()
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+// 产物名：Gradle 默认会拼成 <base>-<version>.jar，而我们的 <base> 里已经含完整版本号，
+// 所以这里把最终产物的 archiveVersion 清空，否则会出现 -0.1.0.1 重复两遍。
+// 注意：loom 的 remapJar / remapSourcesJar 继承的是 AbstractArchiveTask 而不是 Jar，
+// 用 tasks.withType(Jar) 是匹配不到的，必须按任务名匹配。
+// 只改面向用户的 remap 产物，build/devlibs 里的开发用 jar 保持默认拼法。
+tasks.matching { it.name == 'remapJar' || it.name == 'remapSourcesJar' }.configureEach { archiveTask ->
+    archiveTask.archiveBaseName = artifactName
+    archiveTask.archiveVersion = ''
+}
+
+// sources jar 里只留源码与资源。
+// 备注：sources jar 会带上 fabric.mod.json，因此误装进 mods/ 会被当成真模组加载，
+// 而里面没有任何 .class，会炸成「mixin class not found」。这是 Maven/loom 的常规打包行为，
+// 不为此改打包规则——装的时候认准不带 -sources 的那个即可。
+
+// 构建成功才写回计数。
+tasks.named('remapJar') {
+    doLast {
+        countFile.text = (buildNumber).toString()
+    }
+}

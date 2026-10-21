@@ -1,0 +1,11 @@
+{
+  "pattern": "minecraft:snout",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "attribute": "trimeffectively:crit_multiplier",
+      "operation": "add_value",
+      "amount": { "value": 0.01, "per": ["gold_group_count"], "stack": "per_piece" }
+    }
+  ]
+}

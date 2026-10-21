@@ -1,0 +1,9 @@
+{
+  "pattern": "minecraft:shaper",
+  "effects": [
+    {
+      "type": "trimeffectively:item_property",
+      "properties": { "keep_repair_cost": true }
+    }
+  ]
+}

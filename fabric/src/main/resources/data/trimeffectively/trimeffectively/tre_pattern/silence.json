@@ -1,0 +1,11 @@
+{
+  "pattern": "minecraft:silence",
+  "effects": [
+    {
+      "type": "trimeffectively:mute_sound",
+      "trigger": "trimeffectively:sound_emitted",
+      "chance": { "value": 0.3, "stack": "per_piece" },
+      "scope": "both"
+    }
+  ]
+}

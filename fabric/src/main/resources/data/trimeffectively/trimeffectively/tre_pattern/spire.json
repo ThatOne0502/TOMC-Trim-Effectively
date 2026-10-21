@@ -1,0 +1,10 @@
+{
+  "pattern": "minecraft:spire",
+  "effects": [
+    {
+      "type": "trimeffectively:damage_in",
+      "trigger": "trimeffectively:take_damage_before",
+      "amount": { "value": -0.01, "per": ["speed_mps"], "stack": "per_piece" }
+    }
+  ]
+}

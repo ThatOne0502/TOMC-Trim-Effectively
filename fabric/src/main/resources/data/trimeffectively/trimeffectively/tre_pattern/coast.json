@@ -1,0 +1,19 @@
+{
+  "pattern": "minecraft:coast",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:oxygen_bonus",
+      "operation": "add_value",
+      "amount": { "value": 2 }
+    },
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:water_movement_efficiency",
+      "operation": "add_value",
+      "amount": { "value": 0.667 }
+    }
+  ]
+}
