@@ -2,7 +2,7 @@
 
 # 变更记录：TOMC-Trim Effectively
 
-> 版本号是 `主.次.构建号`。构建号是「第几次成功构建」的序号，不是语义化版本——它变大不代表兼容性有承诺，只代表又多了一次构建。
+> 版本号是 `主.次.修.构建号`。构建号是「第几次成功构建」的序号，不是语义化版本——它变大不代表兼容性有承诺，只代表又多了一次构建。
 > 文件名末尾的 `mc1.21.11` 与 `mc26.1.2` 是目标游戏版本。同一版本号在两边的功能一致。
 > 这里只记玩家与整合包作者能感知到的变化。效果与数据的完整说明见 [docs/CONTENT.md](docs/CONTENT.md) 与 [docs/DATA.md](docs/DATA.md)；每处改动的理由见 [docs/DESIGN.md](docs/DESIGN.md) 与 [docs/INTERNALS.md](docs/INTERNALS.md)。
 > 格式参考 Keep a Changelog。不记日期——这些构建号是构建流水号的产物，没有可信的发布日期可写。
