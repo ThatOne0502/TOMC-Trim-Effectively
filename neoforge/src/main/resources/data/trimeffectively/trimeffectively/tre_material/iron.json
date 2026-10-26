@@ -1,0 +1,12 @@
+{
+  "material": "minecraft:iron",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:armor",
+      "operation": "add_value",
+      "amount": { "value": 0.5, "per": ["gear.armor"], "stack": "once" }
+    }
+  ]
+}

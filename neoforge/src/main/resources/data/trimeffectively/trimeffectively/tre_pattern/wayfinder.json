@@ -1,0 +1,15 @@
+{
+  "pattern": "minecraft:wayfinder",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:movement_speed",
+      "operation": "add_multiplied_base",
+      "amount": { "value": 0.5 },
+      "conditions": [
+        { "condition": "trimeffectively:facing_respawn" }
+      ]
+    }
+  ]
+}

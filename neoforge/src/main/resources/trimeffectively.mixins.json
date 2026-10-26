@@ -1,0 +1,47 @@
+{
+  "required": true,
+  "package": "io.github.thatone0502.trimeffectively.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AnimalBreedingMixin",
+    "AnvilMenuMixin",
+    "ContainerLootMixin",
+    "EntityEffectsMixin",
+    "EntityMixin",
+    "EntitySoundMixin",
+    "EnderDragonMixin",
+    "ItemCombinerMenuAccessor",
+    "ItemEntityEffectsMixin",
+    "ItemStackEffectsMixin",
+    "LivingEntityEffectsMixin",
+    "LivingEntityDamageMixin",
+    "LivingEntityCanBeAffectedMixin",
+    "LivingEntityMixin",
+    "LootTableEffectsMixin",
+    "MerchantResultSlotMixin",
+    "MobEffectInstanceAccessor",
+    "PiglinAiMixin",
+    "PiglinBruteAiMixin",
+    "PlayerActuallyHurtMixin",
+    "PlayerXpMixin",
+    "PotionBrewingMixin",
+    "RecipeManagerMixin",
+    "ServerGamePacketListenerMixin",
+    "ShapedRecipeAccessor",
+    "ServerLevelGameEventMixin",
+    "SmithingMenuMixin",
+    "SmithingTrimRecipeAccessor",
+    "VillagerTradeMixin",
+    "WitherBossMixin"
+  ],
+  "client": [
+    "LivingEntityRendererTwitchMixin",
+    "LivingEntityRenderStateTwitchMixin",
+    "ModelPartGlitchMixin",
+    "SoundEngineDedupeMixin",
+    "SoundManagerAnnotateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

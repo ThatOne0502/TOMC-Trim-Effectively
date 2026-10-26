@@ -54,6 +54,11 @@ public final class HarmfulEffectRate {
 			if (instance.getEffect().value().getCategory() == MobEffectCategory.BENEFICIAL) {
 				continue;
 			}
+			// Endphase's remaining time *is* its damage, and a stare is supposed to hold it still. Speeding up that
+			// countdown would silently undo the hold, so it stands down for the ticks where the hold applies.
+			if (instance.getEffect().value() == EndphaseEffect.INSTANCE && EndphaseEffect.isHeld(entity)) {
+				continue;
+			}
 			int remaining = instance.getDuration() - whole;
 			if (remaining <= 0) {
 				entity.removeEffect(instance.getEffect());

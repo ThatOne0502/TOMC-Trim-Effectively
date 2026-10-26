@@ -26,6 +26,8 @@ A 4-piece `sentry` set plus a 4-piece copper set, hitting from 3 blocks away: +6
 
 The "per piece" column is a single piece; the "four pieces" column is the value with four pieces worn. Hands count toward the piece count as well.
 
+The Trim column gives the data id. The Chinese edition spells the same thing with its in-game Chinese name minus the trailing "Armor Trim" (塑造盔甲纹饰 becomes 塑造), and materials minus the trailing "质".
+
 | Name | Trim | Per piece | Four pieces |
 |---|---|---|---|
 | **Long Shot** (百步穿杨, `sentry`) | `sentry` | +5% damage on this hit per block of distance | At 4 blocks, +80% on one hit; no cap |
@@ -103,6 +105,12 @@ A negative effect that treats "remaining time" as its damage source. The name is
 
 The fourth route is a trim: `Ender Avatar` (眼眸) applies it on hit, scaled by the damage — see §2.
 
+**While you are being watched**
+
+- When another mob **looks you straight in the eyes**, the remaining seconds **stop falling** — the clock holds and only resumes once the stare breaks. The test is 32 blocks, an unobstructed line of sight and a heading within about 10°; players always count, other mobs are judged by their head direction, and a carved pumpkin on the gazer's head does not count (the enderman rule). Damage and water damage still land while the clock holds.
+- While watched you carry `Wavefunction Collapse` (波函数坍缩): retried every 0.5 seconds, but never restarted while the previous one is still playing, so it sounds like one continuous stretch — but this one is targeted: it is sent to the watched player only, nobody else hears it, and when the watched thing is a mob there is no sound at all. Every time damage adds seconds you hear `Glitch` (故障) once. Both have closed captions, so anyone with subtitles on can read them instead of hearing them.
+- Each time you take damage (a legitimate hit — the one that adds seconds), the model bursts apart for an instant, about 0.6 seconds: first the whole skin turns into a black-and-purple checkerboard, then the body parts come apart, twist once and collapse once, and it is over. The old "one twitch every 2 seconds" is gone, and nothing lingers after the effect ends. Everyone sees the same burst.
+
 ---
 
 ## 5. Three new recipes in the smithing table
@@ -137,7 +145,7 @@ Gamemaster permission required (OP level 2).
 
 ## 7. Config screen
 
-There is exactly one option, stored in `config/trimeffectively.json`; you can also change it from the config screen in the mod list:
+There is exactly one option, stored in `config/trimeffectively.json`; you can also change it from the config screen in the mod list (the screen needs Cloth Config installed — plus Mod Menu on Fabric, whereas Cloth alone is enough on NeoForge):
 
 | Option | Default | Notes |
 |---|---|---|

@@ -1,0 +1,10 @@
+{
+  "pattern": "minecraft:tide",
+  "effects": [
+    {
+      "type": "trimeffectively:harmful_effect_rate",
+      "trigger": "trimeffectively:equipped",
+      "amount": { "value": 2.0, "stack": "per_piece" }
+    }
+  ]
+}

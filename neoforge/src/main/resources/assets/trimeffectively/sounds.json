@@ -1,0 +1,18 @@
+{
+  "wavefunction_collapse": {
+    "subtitle": "subtitles.trimeffectively.wavefunction_collapse",
+    "sounds": [
+      "trimeffectively:wavefunction_collapse"
+    ]
+  },
+  "glitch": {
+    "subtitle": "subtitles.trimeffectively.glitch",
+    "sounds": [
+      "trimeffectively:glitch1",
+      "trimeffectively:glitch2",
+      "trimeffectively:glitch3",
+      "trimeffectively:glitch4",
+      "trimeffectively:glitch5"
+    ]
+  }
+}

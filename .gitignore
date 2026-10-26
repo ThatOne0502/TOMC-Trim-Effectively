@@ -19,15 +19,18 @@ logs/
 crash-reports/
 .fabric/
 
-# 构建产物与本地参考包
+# 构建产物与本地参考包（wrapper 的 jar 例外，两个平台各一份）
 *.jar
 *.zip
-!gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # 本地备份与临时目录（含解包出来的第三方 mod / 映射中间产物）
 backup/
 temp/
 temp*/
+
+# 正式构建产物的本地汇集目录：只留在本机，不随仓库发布。
+dist/
 
 # IDE
 .idea/
@@ -47,3 +50,6 @@ desktop.ini
 
 # 日志
 *.log
+
+# 开发记录，只在本机留存，不随仓库发布。
+notes/

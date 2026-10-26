@@ -1,0 +1,16 @@
+{
+  "material": "minecraft:quartz",
+  "effects": [
+    {
+      "type": "trimeffectively:thorns",
+      "trigger": "trimeffectively:take_damage_after",
+      "amount": { "value": 0.5, "stack": "per_piece" },
+      "conditions": [
+        {
+          "condition": "minecraft:damage_source_properties",
+          "predicate": { "tags": [ { "id": "minecraft:is_projectile", "expected": false } ] }
+        }
+      ]
+    }
+  ]
+}

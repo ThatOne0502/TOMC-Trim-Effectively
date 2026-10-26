@@ -3,7 +3,7 @@
 > [!WARNING]
 > **Early Development**
 >
-> This project targets Minecraft **1.21.11 · Fabric** only and is in the `0.1.0.x` line. Content, data format and options may still change without backward compatibility. Back up your world before updating.
+> This project ships for two platforms: Minecraft **1.21.11 · Fabric** and **26.1.2 · NeoForge**, currently in the `0.2.0.x` line. Content, data format and options may still change without backward compatibility. Back up your world before updating.
 >
 > **AI-Assisted**
 >
@@ -38,15 +38,15 @@ The full list is in [CONTENT.md](CONTENT.md) (Chinese).
 
 ## Installation
 
-| Requirement | Notes |
-| --- | --- |
-| Minecraft | 1.21.11 |
-| Fabric Loader | ≥ 0.19.3 |
-| Fabric API | Required |
-| Java | 21 |
-| Mod Menu + Cloth Config | Optional; only needed for the in-game config screen |
+| Requirement | Fabric build | NeoForge build |
+| --- | --- | --- |
+| Minecraft | 1.21.11 | 26.1.2 |
+| Loader | Fabric Loader ≥ 0.19.3 | NeoForge ≥ 26.1.2.124 |
+| Required mods | Fabric API | none |
+| Java | 21 | 25 |
+| Config screen | Mod Menu + Cloth Config (optional) | Cloth Config (optional; without it, edit the JSON) |
 
-Drop the jar into `mods/`. Both client and server need it (`environment: "*"`), and the **versions must match** — the effect catalogue is a synced dynamic registry, so a mismatch will refuse the connection.
+Drop the jar for **your** platform into `mods/` (do not install both builds — the mod id is the same). Both client and server need it, and the **versions must match** — the effect catalogue is a synced dynamic registry, so a mismatch will refuse the connection.
 
 ## Commands
 
@@ -63,19 +63,19 @@ Gamemaster permission required:
 | write your own effects or trims | [DATA.en.md](DATA.en.md) | datapack and mod authors |
 | know how it works inside | [INTERNALS.en.md](INTERNALS.en.md) | developers |
 | know why it is built this way | [DESIGN.en.md](DESIGN.en.md) | anyone interested in the trade-offs |
-| see what changed in each build | [STATUS.en.md](STATUS.en.md) | everyone |
+| see what each build adds or changes | [../CHANGELOG.en.md](../CHANGELOG.en.md) | everyone |
+| paste copy into a store page | [PUBLISHING.md](../PUBLISHING.md) | the author |
 
 Every document exists in both languages with matching numbering; the Chinese version is the source of truth and each English file has a switch link back to its counterpart. The full index is in [README.index.en.md](README.index.en.md).
 
 ## Building from source
 
 ```sh
-cd fabric
-./gradlew build        # Linux / macOS
-gradlew.bat build      # Windows
+cd fabric && ./gradlew build      # Fabric build
+cd neoforge && ./gradlew build    # NeoForge build
 ```
 
-Output: `fabric/build/libs/tomc-trimeffectively-<version>-fabric+mc1.21.11.jar`. Gradle itself needs **JDK 17+** to start; the **Java 21** compile target is provisioned by the toolchain. See [fabric/README.md](../fabric/README.md) for the jar naming, `runClient`/`runServer` and the code map.
+Outputs: `fabric/build/libs/tomc-trimeffectively-<version>-fabric+mc1.21.11.jar` and `neoforge/build/libs/tomc-trimeffectively-<version>-neoforge+mc26.1.2.jar`. Gradle itself needs **JDK 17+** to start; the compile target is provisioned by the toolchain (Java 21 for Fabric, Java 25 for NeoForge). See [fabric/README.md](../fabric/README.md) and [neoforge/README.md](../neoforge/README.md) for jar naming, `runClient`/`runServer` and the code map.
 
 ## Licence & credits
 

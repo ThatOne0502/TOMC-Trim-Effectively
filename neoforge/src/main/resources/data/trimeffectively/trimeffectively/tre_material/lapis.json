@@ -1,0 +1,12 @@
+{
+  "material": "minecraft:lapis",
+  "effects": [
+    {
+      "type": "trimeffectively:attribute",
+      "trigger": "trimeffectively:equipped",
+      "attribute": "minecraft:luck",
+      "operation": "add_value",
+      "amount": { "value": 1 }
+    }
+  ]
+}

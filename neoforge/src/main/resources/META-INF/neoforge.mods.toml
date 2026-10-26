@@ -1,0 +1,34 @@
+# 26.x 同 21.x 形态：无加载器声明字段（走默认 javafml）；license 必填。
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+description="${mod_description}"
+# 模组列表界面（ModListScreen）里显示的 logo。路径相对于 jar 根。
+logoFile="assets/trimeffectively/logo.png"
+logoBlur=false
+
+[[dependencies.${mod_id}]]
+modId="neoforge"
+versionRange="${neo_version_range}"
+mandatory=true
+
+[[dependencies.${mod_id}]]
+modId="minecraft"
+versionRange="${minecraft_version_range}"
+mandatory=true
+
+
+# 可选前置：装了它才有图形配置页，没装就退回手写 config/trimeffectively.json。
+[[dependencies.${mod_id}]]
+modId="cloth_config"
+type="optional"
+versionRange="[26.1.154,)"
+ordering="NONE"
+side="CLIENT"
+
+[[mixins]]
+config="trimeffectively.mixins.json"

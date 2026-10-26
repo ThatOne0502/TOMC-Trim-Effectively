@@ -88,5 +88,8 @@
   "config.trimeffectively.scope.server": "只读：显示的是当前服务器的设置。只有主机能修改，客户端无法覆盖。",
   "config.trimeffectively.section.recipes": "模板配方",
   "config.trimeffectively.hijack_trim_duplication_recipes": "模板复制配方劫持",
-  "config.trimeffectively.hijack_trim_duplication_recipes.tooltip": "尝试让所有模板配方变得更便宜\n需要重载数据包生效"
+  "config.trimeffectively.hijack_trim_duplication_recipes.tooltip": "尝试让所有模板配方变得更便宜\n需要重载数据包生效",
+
+  "subtitles.trimeffectively.wavefunction_collapse": "波函数坍缩",
+  "subtitles.trimeffectively.glitch": "故障"
 }

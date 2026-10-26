@@ -1,0 +1,15 @@
+{
+  "pattern": "minecraft:wild",
+  "effects": [
+    {
+      "type": "trimeffectively:extra_loot_roll",
+      "trigger": "trimeffectively:kill",
+      "rolls": { "value": 1, "stack": "per_piece" }
+    },
+    {
+      "type": "trimeffectively:extra_loot_roll",
+      "trigger": "trimeffectively:loot_roll",
+      "rolls": { "value": 1, "stack": "per_piece" }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.144'
+    id 'idea'
+}
+
+version = "${project.mod_version}-neoforge+mc${project.minecraft_version}"
+group = "io.github.thatone0502.trimeffectively"
+
+base {
+    archivesName = 'tomc-trimeffectively'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+// 与 Fabric 侧一致：一并产出 sources jar，方便对照。
+java {
+    withSourcesJar()
+}
+
+neoForge {
+    version = project.neo_version
+    // TODO: 26.x 官方 MDK 无映射配置块；如需自定义映射请参照 1.21 线模板自行添加。
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+        data { data() }
+    }
+    mods {
+        "trimeffectively-neoforge" { sourceSet sourceSets.main }
+    }
+}
+
+repositories {
+    maven { name = 'shedaniel'; url = 'https://maven.shedaniel.me/' }
+}
+
+// Cloth Config 是可选的运行时依赖：只用于编译配置界面，不打包、不声明为必需前置。
+// 没装它的客户端不会加载 TreConfigScreen，配置页也就不会出现在模组列表里。
+dependencies {
+    compileOnly "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+}
+
+// 只对 toml 做属性展开；二进制资源（ogg/png）绝不能过 expand。
+processResources {
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand project.properties
+    }
+}
+

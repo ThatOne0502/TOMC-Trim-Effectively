@@ -1,0 +1,10 @@
+{
+  "pattern": "minecraft:host",
+  "effects": [
+    {
+      "type": "trimeffectively:trade_keep",
+      "trigger": "trimeffectively:trade",
+      "chance": { "value": 0.2, "stack": "per_piece" }
+    }
+  ]
+}

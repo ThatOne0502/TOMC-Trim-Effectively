@@ -212,11 +212,12 @@ Identifier modifierId = Tre.id(path + (operation == ADD_VALUE ? "" : "_" + opera
 
 ## 10. 客户端只做表现
 
-客户端参与的部分只有三处，全部不参与数值：
+客户端参与的部分只有以下几处，全部不参与数值：
 
 - **tooltip**（`TrimTooltip`）：按住可绑定键时，把原版 tooltip 里「纹饰名」「材料名」两行**原位替换**成效果名 + 描述；一行换一行，不新增行。数据显示靠 synced 注册表，不靠网络包。
 - **声音标注**（`SoundAnnotations` + `SoundManagerAnnotateMixin` / `ServerLevelGameEventMixin`）：`annotate_sound` 只在本客户端渲染。振动粒子用 `ParticleTypes.VIBRATION` + `VibrationParticleOption(EntityPositionSource(本玩家), ticks)` 从声源指向玩家；文字是**客户端本地 spawn 的 `TextDisplay`**（不发给服务端），`billboard=CENTER`、`see_through=true`，每 tick 用带 alpha 的 `Style` 重写做渐隐。自定义渲染管线（1.21.9+ 的 submit 体系）成本太高，本地实体绕开了它。
-- **配置页**（`TreConfigScreen` / `TreMenuIntegration`）：本地配置写 `config/trimeffectively.json`；联机时只读显示服务端的值（`TreConfigPayload` / `TreConfigSync`）。
+- **配置页**（`TreConfigScreen` / `TreMenuIntegration`）：本地配置写 `config/trimeffectively.json`；联机时只读显示服务端的值（`TreConfigPayload` / `TreConfigSync`）。两个平台的入口不同：Fabric 走 Mod Menu 的 `ModMenuApi#getModConfigScreenFactory`，NeoForge 走 `ModContainer#registerExtensionPoint(IConfigScreenFactory.class, …)`；NeoForge 侧只在检测到 `cloth_config` 已加载时才注册，所以没装 Cloth 的客户端永远不会加载这个类。
+- **Endphase 的故障爆发**（`EndphaseTwitch` / `PartGlitch` + `TreGlitchPayload` + `ModelPartGlitchMixin`）：服务端只决定「什么时候开始」——受伤时发一个 `TreGlitchPayload(entityId, length, seed)`；画成什么样完全在客户端，详见 §14。
 
 `extra_jumps` 的落地重置有客户端移动判定，但服务端保留一次校验——纯客户端的话创造飞行、连跳、`onGround` 时序三者会互相打架。
 
@@ -256,3 +257,100 @@ unzip -p minecraft-merged.jar data/minecraft/tags/damage_type/is_projectile.json
 - 数据与代码分离：JSON 全在 `fabric/src/main/resources/data/trimeffectively/`，将来移植时抽到 `common/data/` 共享。
 - 三条锻造台配方注册为 `PlacementInfo.NOT_PLACEABLE` 且 `isSpecial()`——它们是在台子前试出来的东西，不是配方书能排布的网格配方。
 - 基础槽的 `Ingredient` 是延迟解析的（`Supplier` + 首次使用时记忆化）：配方解码发生在物品标签绑定之前，构造期查 `#minecraft:trimmable_armor` 会抛 `Missing tag`；记忆化存的是 tag 的活 `HolderSet`，所以数据包改标签仍然立刻生效。
+
+---
+
+## 13. 服务端：注视判定与两个音效
+
+**`effect/Gaze.java`：谁在看着你。** 每 tick 一次查询，候选集是 32 格内的活体：
+
+```java
+List<LivingEntity> candidates = level.getEntitiesOfClass(
+        LivingEntity.class, subject.getBoundingBox().inflate(RANGE));
+```
+
+- `RANGE = 32.0`、`CONE = 0.985`（约 10°）。先比点积、后做射线：`hasLineOfSight` 一次就是一条射线，比点积贵一个量级，不能对 32 格里每个候选都跑。
+- 朝向：玩家 `Player#getViewVector(1.0F)`，其它生物 `Entity#calculateViewVector(getXRot(), getYHeadRot())`。**`LivingEntity` 不重写 `getLookAngle()`**，它给的仍是身体朝向——这就是注视判定必须显式取头部 yaw 的原因。
+- 头戴雕刻南瓜的注视者不算（照末影人的判定）。
+
+**`MobEffectInstance` 的 tick 顺序决定冻结怎么写。** `tickServer` 的字节码：
+
+```
+shouldApplyEffectTickThisTick(duration, amplifier)  →  applyEffectTick(...)  →  tickDownDuration()
+```
+
+- 所以 `applyEffectTick` 里的 `+1` 落在递减之前，一次 `+1` 抵掉一次 `-1`，`duration` 严格不动。按秒补 20 tick 会让 `floor(seconds)` 先掉 1 再跳回，心形那一行闪一下（0.1.0.41 修过同一个症状）。
+- 写字段走 `MobEffectInstanceAccessor`（`@Accessor("duration")` → `trimeffectively$setDuration(int)`）：1.21.11 的 `MobEffectInstance` 没有 `setDuration`，只有 `update`。
+- 每 5 tick 重发 `ClientboundUpdateMobEffectPacket(entityId, instance, true)`，经 `PlayerLookup.tracking(entity)` 逐个 `player.connection.send(...)`。服务端续上不等于客户端知道——客户端自己也在倒数，不重发的话图标先消失。`fabric-networking-api-v1 5.1.6` 已经删掉 `PacketDistributor`，别再按老签名找它。
+
+**`sound/TreSounds.java`。**
+
+```java
+public static final Holder<SoundEvent> PHASE_COLLAPSE = register("wavefunction_collapse");
+public static final Holder<SoundEvent> GLITCH         = register("glitch");
+
+private static Holder<SoundEvent> register(String path) {
+    Identifier id = Tre.id(path);
+    return Registry.registerForHolder(BuiltInRegistries.SOUND_EVENT, id,
+            SoundEvent.createVariableRangeEvent(id));
+}
+```
+
+- `createVariableRangeEvent` 仍然保留：事件本身仍是可变范围事件，`SoundEvent#getRange(volume)` 也仍按音量算距离（音量 2.0 走 `16 × volume` 分支 = 32 格）。但 `wavefunction_collapse` 现在**不再广播**：服务端用 `ClientboundSoundPacket(TreSounds.PHASE_COLLAPSE, SoundSource.PLAYERS, x, y, z, 2.0F, 1.0F, level.getRandom().nextLong())` 只发给被注视的那一个玩家（`entity instanceof ServerPlayer` 时），所以「32 格」不再是听得见的范围，而是声音本身按位置衰减的参数；被注视的对象是生物时没有声音。
+- 注册排在 `TreAttributes.init()` 之后、数据包解码之前：解码阶段拿到的 `Holder` 必须已经存在。
+- `isDeduplicated(Identifier)` 仍然只对 `wavefunction_collapse` 返回 true，但意义收窄了：听众只剩一个人，去重保的是「同一个人被连续注视时不要叠成一团」；`glitch` 每次受伤都可能来一发，允许叠加。
+
+---
+
+## 14. 客户端：故障爆发、部件错位与音效去重
+
+**定时抽搐已经删掉。** 旧实现是「实体 uuid + 每 2 秒一个窗口」算出来的定时抽搐：不存状态，也就无从知道效果是否还在。实测在状态效果结束之后模型仍会周期性抽一下，因此整套按窗口计算的逻辑弃用——现在的表现只由一次事件驱动。
+
+**一次爆发怎么开始。** 触发点在服务端：`EndphaseEffect.onDamageTaken` 因受伤而增加秒数、播放 `故障` 音效的那一行之后，调 `TreGlitchSync.send(entity)`，构造 `TreGlitchPayload(entityId, length, seed)`。
+
+- 载荷发给 `PlayerLookup.tracking(entity)` 里的所有玩家；`tracking` 不含实体自己，所以当它是玩家时再单独补发一份，否则第三人称（F5）看不到自己身上的爆发。
+- `TreGlitchSync.register()` 在服务端初始化阶段、`TreConfigSync.register()` 之后把载荷注册为 S2C；客户端在 `TrimeffectivelyClient` 里注册接收器，收到后调 `EndphaseTwitch.burst(entityId, length, seed)`。
+- `BURST_TICKS = 12` tick（约 0.6 秒）：爆发长度是载荷里的一个数，不是客户端自己再算一次的时间函数。
+
+**毫秒计时与过期删除。** 客户端按实体 id 把爆发存在本地 map 里，用 `net.minecraft.util.Util.getMillis()` 的毫秒时间戳计时，每 50 ms 一帧；过期即删，实体身上已经没有 Endphase 也立刻删。
+
+- 「效果结束后绝不可能再抽」就是这么来的：爆发只在受伤那一刻被创建，没有任何周期性入口会把它重新创建回来。
+- 用毫秒而不是 tick：12 帧在客户端 tick 抖动下会变成 11 或 13 帧，毫秒戳让 0.6 秒就是 0.6 秒。
+
+**状态怎么进渲染管线。** 渲染状态里存的是一个可空的 `TwitchFrame` 记录（`texture, x, y, z, yaw, roll, squash, seed, tick`，`client/TwitchFrame.java`），接口 `TreTwitchState` 只有 `trimeffectively$setFrame(TwitchFrame)` / `trimeffectively$frame()` 两个方法，`LivingEntityRenderStateTwitchMixin` 只持有一个 `@Unique TwitchFrame` 字段。`EntityRenderState` 不持有实体对象，唯一还拿得到实体的入口仍是 `extractRenderState(LivingEntity, S, float)`，mixin 在它的 TAIL 注入。
+
+- 一个字段代替原来的 6 个散字段：`null` 就是「这个实体此刻没有爆发」，换贴图、位姿、部件错位都从同一条记录读，不会出现「位移有、换贴图没有」这种半套状态。
+- 爆发期间渲染器做三件事：棋盘换贴图、整体位姿、部件错位。
+
+**渲染器上的三件事。**
+
+1. **换贴图**：`@ModifyExpressionValue` 拦 `getRenderType` 里那次 `getTextureLocation`，前 2 帧回 `MISSING_TEXTURE = trimeffectively:textures/entity/missing.png`。`getTextureLocation` 在 `LivingEntityRenderer` 里是**抽象**方法、每个子类各写一份，拦一处只覆盖一个渲染器；`getRenderType` 是具体方法且被所有子类共用，一处拦截覆盖全部生物渲染器。
+2. **整体位姿**：`@WrapMethod` 包 `submit`，`finally` 里 `popPose()`。位移每帧不超过 `OFFSET = 0.30F` 格，偏航扭转 `YAW = 14.0F` 度，沿视线方向的侧倾 `ROLL = 9.0F` 度，竖直方向折叠/拉伸 `SQUASH = 0.12F`（1 ± 0.12 倍）。`PoseStack` 没有 `rotate(float, float, float)`，旋转只能用 `mulPose(new Quaternionf()...)`。
+3. **部件错位**：`client/PartGlitch.java` + `mixin/ModelPartGlitchMixin.java`，在 `ModelPart#translateAndRotate(PoseStack)` 的 TAIL 注入。
+
+**为什么挂在 `translateAndRotate`。** 它是每个部件唯一都要经过的方法：即时 `render` 路径与提交到节点收集器的 `visit` 路径都会走它，一处注入即覆盖所有生物、所有层（头、四肢、躯干、护甲层、鞘翅、披风都在内）。
+
+- 每个部件各自获得最多 `0.06` 格的错位，看起来是「身体被拆开」，而不是整只生物平移。
+- **方向固定、距离抖动**：方向对同一个部件在整个爆发期内固定，由爆发 seed 与部件 `identity hash` 派生；距离每帧变化（0.4~1.0 倍）。所以是「同一条手臂一直待错地方」，不是每帧重掷的随机噪声；竖直分量只取六成，避免整个人被抽离地面。
+- `PartGlitch.begin(seed, tick)` / `end()` 由渲染器 mixin 在实体 `submit` 前后用 try/finally 开关，因此只影响正在爆发的那一个实体，旁边的生物照常站着。
+- **seed 的意义**：它随载荷下发，同一次爆发在所有参与客户端算出完全相同的方向——所有人看到的是同一次爆发，而不是各自的随机抖动。
+
+**为什么不用原版 missingno 纹理。** 原版没有可复用的 `missingno` 纹理标识，只有图集用的 `MissingTextureAtlasSprite`，当不了实体贴图；所以棋盘是模组自带的 16×16 品红/黑图。
+
+**`波函数坍缩` 只发给被注视者。** 被注视期间（每 10 tick，音量 2.0）不再广播：服务端改发 `ClientboundSoundPacket(TreSounds.PHASE_COLLAPSE, SoundSource.PLAYERS, x, y, z, 2.0F, 1.0F, 随机 seed)`，且只在 `entity instanceof ServerPlayer` 时发。
+
+- 好处是提示变得准确：这个音效本来就是放给「被盯着的人」的，旧行为让 32 格内所有人都听见，等于把别人的状态广播成了环境音。
+- 后果一：被注视的是玩家时，只有他自己听得见，旁边的队友听不见。
+- 后果二：被注视的是生物时完全没有声音——生物不需要这个提示，也没有「自己的客户端」可发。
+- 音量仍是 2.0，`getRange` 仍是 32 格，判定距离内一定听得见；只是听众从「广播半径」收窄成了「一个人」。
+
+**音效去重（`SoundEngineDedupeMixin`）。**
+
+```java
+@Shadow @Final private Map<SoundInstance, ?> instanceToChannel;
+```
+
+- 泛型擦成 `Map<SoundInstance, ?>`：真实 value 类型是包私有的 `ChannelAccess$ChannelHandle`，mixin 类里 import 不到。
+- 在 `SoundEngine#play` 的 HEAD 拿 `instanceToChannel` 的 key 逐个比 `SoundInstance#getIdentifier()`，撞上就返回 `SoundEngine.PlayResult.NOT_STARTED`。
+- 这是「同一音效是否仍在播放」唯一可靠的判据：时间戳假设音频长度固定，资源包一换就失准；`instanceToChannel` 是在播实例的活表，播完即移除。
+- 去重只对 `wavefunction_collapse` 生效；听众收窄成一个人之后，它保住的听感变成「同一个人被连续注视时不要叠成一团」，`glitch` 仍然允许叠加。

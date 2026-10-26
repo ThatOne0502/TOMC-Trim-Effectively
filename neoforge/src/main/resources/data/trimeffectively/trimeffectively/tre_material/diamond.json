@@ -1,0 +1,11 @@
+{
+  "material": "minecraft:diamond",
+  "effects": [
+    {
+      "type": "trimeffectively:item_property",
+      "properties": {
+        "durability_multiplier": 2
+      }
+    }
+  ]
+}

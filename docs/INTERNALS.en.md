@@ -212,11 +212,12 @@ Identifier modifierId = Tre.id(path + (operation == ADD_VALUE ? "" : "_" + opera
 
 ## 10. The client only renders
 
-The client takes part in three places only, and none of them affects numbers:
+The client takes part in the following places only, and none of them affects numbers:
 
 - **tooltip** (`TrimTooltip`): while the bindable key is held, it **replaces in place** the two vanilla tooltip lines "trim pattern name" and "material name" with effect name + description; one line for one line, no added lines. The data comes from the synced registry, not from a network packet.
 - **sound annotations** (`SoundAnnotations` + `SoundManagerAnnotateMixin` / `ServerLevelGameEventMixin`): `annotate_sound` renders on this client only. The vibration particle uses `ParticleTypes.VIBRATION` + `VibrationParticleOption(EntityPositionSource(this player), ticks)` pointing from the sound source to the player; the text is a **`TextDisplay` spawned locally on the client** (never sent to the server), with `billboard=CENTER`, `see_through=true`, rewritten every tick with an alpha-bearing `Style` to fade out. A custom render pipeline (the 1.21.9+ submit system) costs too much, and a local entity sidesteps it.
-- **config screen** (`TreConfigScreen` / `TreMenuIntegration`): local config is written to `config/trimeffectively.json`; when connected it shows the server's values read-only (`TreConfigPayload` / `TreConfigSync`).
+- **config screen** (`TreConfigScreen` / `TreMenuIntegration`): local config is written to `config/trimeffectively.json`; when connected it shows the server's values read-only (`TreConfigPayload` / `TreConfigSync`). The two platforms hook it up differently: Fabric through Mod Menu's `ModMenuApi#getModConfigScreenFactory`, NeoForge through `ModContainer#registerExtensionPoint(IConfigScreenFactory.class, …)`; the NeoForge side only registers it when `cloth_config` is loaded, so a client without Cloth never loads the class at all.
+- **Endphase's glitch burst** (`EndphaseTwitch` / `PartGlitch` + `TreGlitchPayload` + `ModelPartGlitchMixin`): the server only decides **when it starts** — one `TreGlitchPayload(entityId, length, seed)` on taking damage — while everything about how it looks lives on the client. See §14.
 
 The landing reset of `extra_jumps` has a client-side movement check, but the server keeps one validation—client-side alone, creative flight, chained jumps and `onGround` timing all fight each other.
 
@@ -256,3 +257,100 @@ For what `javap` cannot show (whether a mixin target is also injected by another
 - Data separated from code: all JSON lives in `fabric/src/main/resources/data/trimeffectively/`, to be extracted into a shared `common/data/` when porting.
 - The three smithing table recipes are registered as `PlacementInfo.NOT_PLACEABLE` and `isSpecial()`—they are things you try out at the table, not grid recipes a recipe book could lay out.
 - The base slot's `Ingredient` is resolved lazily (`Supplier` + memoized on first use): recipe decoding happens before item tags are bound, so querying `#minecraft:trimmable_armor` during construction throws `Missing tag`; the memo holds the tag's live `HolderSet`, so a datapack that changes the tag still takes effect immediately.
+
+---
+
+## 13. Server side: the gaze test and the two sounds
+
+**`effect/Gaze.java`: who is looking at you.** One query per tick; the candidate set is the living entities within 32 blocks:
+
+```java
+List<LivingEntity> candidates = level.getEntitiesOfClass(
+        LivingEntity.class, subject.getBoundingBox().inflate(RANGE));
+```
+
+- `RANGE = 32.0`, `CONE = 0.985` (about 10°). Dot product first, ray second: one `hasLineOfSight` is one raycast, an order of magnitude dearer than a dot product, so it cannot be run for every candidate within 32 blocks.
+- Heading: players use `Player#getViewVector(1.0F)`, other mobs use `Entity#calculateViewVector(getXRot(), getYHeadRot())`. **`LivingEntity` does not override `getLookAngle()`** — it still returns the body heading, which is why the gaze test has to read the head yaw explicitly.
+- A gazer wearing a carved pumpkin does not count (enderman rules).
+
+**The tick order of `MobEffectInstance` decides how the freeze is written.** The bytecode of `tickServer`:
+
+```
+shouldApplyEffectTickThisTick(duration, amplifier)  →  applyEffectTick(...)  →  tickDownDuration()
+```
+
+- So the `+1` inside `applyEffectTick` lands before the decrement: one `+1` cancels one `-1` and `duration` does not move at all. Paying 20 ticks per second makes `floor(seconds)` drop by 1 and jump back, flickering the heart row (the same symptom fixed in 0.1.0.41).
+- The write goes through `MobEffectInstanceAccessor` (`@Accessor("duration")` → `trimeffectively$setDuration(int)`): the 1.21.11 `MobEffectInstance` has no `setDuration`, only `update`.
+- Every 5 ticks the effect is resent as `ClientboundUpdateMobEffectPacket(entityId, instance, true)`, one `player.connection.send(...)` per tracker from `PlayerLookup.tracking(entity)`. The server renewing the duration is not the client knowing — the client counts down too, and without the resend the icon vanishes first. `fabric-networking-api-v1 5.1.6` has already dropped `PacketDistributor`, so do not look for the old signature.
+
+**`sound/TreSounds.java`.**
+
+```java
+public static final Holder<SoundEvent> PHASE_COLLAPSE = register("wavefunction_collapse");
+public static final Holder<SoundEvent> GLITCH         = register("glitch");
+
+private static Holder<SoundEvent> register(String path) {
+    Identifier id = Tre.id(path);
+    return Registry.registerForHolder(BuiltInRegistries.SOUND_EVENT, id,
+            SoundEvent.createVariableRangeEvent(id));
+}
+```
+
+- `createVariableRangeEvent` stays: the event is still a variable-range event, and `SoundEvent#getRange(volume)` still turns volume into distance (volume 2.0 takes the `16 × volume` branch = 32 blocks). But `wavefunction_collapse` is **no longer broadcast**: the server sends `ClientboundSoundPacket(TreSounds.PHASE_COLLAPSE, SoundSource.PLAYERS, x, y, z, 2.0F, 1.0F, level.getRandom().nextLong())` to the watched player only (when `entity instanceof ServerPlayer`), so "32 blocks" is no longer the audible radius but a positional-attenuation parameter of the sound itself; when the watched thing is a mob there is no sound at all.
+- Registration sits after `TreAttributes.init()` and before the datapack decodes: any `Holder` handed out during decoding must already exist.
+- `isDeduplicated(Identifier)` still returns true only for `wavefunction_collapse`, but the meaning has narrowed: with a single listener, the dedupe protects "one player being watched continuously should not hear it pile into mush"; `glitch` can fire on every hit and is allowed to stack.
+
+---
+
+## 14. Client side: the glitch burst, part displacement and sound deduplication
+
+**The periodic twitch is gone.** The old implementation derived a timed twitch from "a uuid-derived value + a 2-second window": it stored no state, which also meant it could not know whether the effect was still there. In practice the model kept twitching periodically after the effect had ended, so the whole window-based computation is retired — the presentation is now driven by a single event.
+
+**How one burst starts.** The trigger is on the server: inside `EndphaseEffect.onDamageTaken`, after the line that adds seconds on damage and plays the `故障` sound, it calls `TreGlitchSync.send(entity)`, which builds `TreGlitchPayload(entityId, length, seed)`.
+
+- The payload goes to every player in `PlayerLookup.tracking(entity)`; `tracking` excludes the entity itself, so when it is a player one extra copy goes to them, otherwise third person (F5) would not show their own burst.
+- `TreGlitchSync.register()` registers the payload as S2C during server initialisation, after `TreConfigSync.register()`; the client registers a receiver in `TrimeffectivelyClient` and calls `EndphaseTwitch.burst(entityId, length, seed)` when it arrives.
+- `BURST_TICKS = 12` ticks (about 0.6 s): the burst length is a number in the payload, not a time function the client recomputes.
+
+**Millisecond timing and expiry.** The client stores the burst in a local map keyed by entity id, timing it with a millisecond timestamp from `net.minecraft.util.Util.getMillis()`, one frame every 50 ms; once it expires it is removed, and it is removed immediately if the entity no longer carries Endphase at all.
+
+- That is where "it can never twitch after the effect ends" comes from: a burst is only created on the moment of damage, and no periodic entry point can create it again.
+- Milliseconds rather than ticks: 12 frames would become 11 or 13 under client tick jitter, and a millisecond stamp makes 0.6 s actually 0.6 s.
+
+**How the state reaches the render pipeline.** The render state holds one nullable `TwitchFrame` record (`texture, x, y, z, yaw, roll, squash, seed, tick`, `client/TwitchFrame.java`); the `TreTwitchState` interface has exactly two methods, `trimeffectively$setFrame(TwitchFrame)` / `trimeffectively$frame()`, and `LivingEntityRenderStateTwitchMixin` holds a single `@Unique TwitchFrame` field. `EntityRenderState` holds no entity object, so the only entry point that still has the entity is `extractRenderState(LivingEntity, S, float)`, and the mixin injects at its TAIL.
+
+- One field replaces the old 6 scattered fields: `null` means "this entity is not bursting right now", and the texture swap, the pose and the part displacement all read the same record, so a half-applied state (displacement without the texture swap) cannot happen.
+- During a burst the renderer does three things: checkerboard texture swap, overall pose, part displacement.
+
+**Three things in the renderer.**
+
+1. **Texture swap**: `@ModifyExpressionValue` intercepts the `getTextureLocation` call inside `getRenderType` and returns `MISSING_TEXTURE = trimeffectively:textures/entity/missing.png` for the first 2 frames. `getTextureLocation` is **abstract** in `LivingEntityRenderer` with one copy per subclass, so intercepting it covers one renderer; `getRenderType` is concrete and shared by every subclass, so one interception covers every living renderer.
+2. **Overall pose**: `@WrapMethod` around `submit`, with `popPose()` in `finally`. Displacement is at most `OFFSET = 0.30F` blocks per frame, yaw twist `YAW = 14.0F` degrees, roll along the view direction `ROLL = 9.0F` degrees, vertical fold/stretch `SQUASH = 0.12F` (1 ± 0.12×). `PoseStack` has no `rotate(float, float, float)`; the only rotation is `mulPose(new Quaternionf()...)`.
+3. **Part displacement**: `client/PartGlitch.java` + `mixin/ModelPartGlitchMixin.java`, injecting at the TAIL of `ModelPart#translateAndRotate(PoseStack)`.
+
+**Why `translateAndRotate` is the only injection point.** It is the one method every part has to go through: both the immediate `render` path and the `visit` path that submits into the node collector pass through it, so a single injection covers every mob and every layer (head, limbs, torso, armour layers, elytra, cape).
+
+- Every part gets up to `0.06` blocks of its own displacement, which reads as "the body is being taken apart" rather than the whole mob sliding.
+- **Fixed direction, jittering distance**: the direction for a given part is fixed for the whole burst, derived from the burst seed and the part's `identity hash`, while the distance changes every frame (0.4–1.0×). That is why it looks like "the same arm keeps sitting in the wrong place" instead of noise re-rolled each frame; the vertical component is scaled to six tenths so nobody is lifted off the ground.
+- `PartGlitch.begin(seed, tick)` / `end()` are switched on and off around the entity's `submit` by the renderer mixin with try/finally, so only the bursting entity is affected and the mob next to it stands normally.
+- **What the seed is for**: it rides along in the payload, so the same burst computes exactly the same directions on every participating client — everyone sees the same burst, not their own random jitter.
+
+**Why not vanilla's missingno texture.** Vanilla has no reusable `missingno` texture identifier, only the atlas-side `MissingTextureAtlasSprite`, which cannot serve as an entity texture; so the checkerboard is a 16×16 magenta/black image shipped with the mod.
+
+**`Wavefunction Collapse` goes to the watched player only.** While watched (once per 10 ticks, volume 2.0) it is no longer broadcast: the server now sends `ClientboundSoundPacket(TreSounds.PHASE_COLLAPSE, SoundSource.PLAYERS, x, y, z, 2.0F, 1.0F, random seed)`, and only when `entity instanceof ServerPlayer`.
+
+- The upside is an accurate cue: the sound was always meant for the person being stared at, and the old behaviour let everyone within 32 blocks hear it, turning someone else's state into ambient noise.
+- Consequence one: when the watched thing is a player, only they hear it; a teammate next to them does not.
+- Consequence two: when the watched thing is a mob there is no sound at all — a mob does not need the cue and has no client to send it to.
+- Volume is still 2.0 and `getRange` is still 32 blocks, so it is audible within the detection range; only the audience shrank from "the broadcast radius" to "one person".
+
+**Sound deduplication (`SoundEngineDedupeMixin`) is still on the HEAD of `SoundEngine#play`.**
+
+```java
+@Shadow @Final private Map<SoundInstance, ?> instanceToChannel;
+```
+
+- The generic is erased to `Map<SoundInstance, ?>`: the real value type is the package-private `ChannelAccess$ChannelHandle`, which a mixin class cannot import.
+- It walks the keys of `instanceToChannel` comparing `SoundInstance#getIdentifier()` and returns `SoundEngine.PlayResult.NOT_STARTED` on a hit.
+- This is the only reliable test for "is the same sound still playing": timestamps assume a fixed audio length and go wrong the moment a resource pack swaps it, whereas `instanceToChannel` is the live table of playing instances, removed as soon as playback ends.
+- Deduplication applies to `wavefunction_collapse` only; now that the audience is a single person, what it protects is "one player being watched continuously should not hear it pile into mush", while `glitch` may still stack.

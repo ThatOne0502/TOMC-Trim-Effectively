@@ -88,5 +88,8 @@
   "config.trimeffectively.scope.server": "Read-only: showing the settings of the current server. Only the host can change them; a client cannot override them.",
   "config.trimeffectively.section.recipes": "Template recipes",
   "config.trimeffectively.hijack_trim_duplication_recipes": "Hijack template duplication recipes",
-  "config.trimeffectively.hijack_trim_duplication_recipes.tooltip": "Try to make every template recipe cheaper\nRequires a data pack reload to take effect"
+  "config.trimeffectively.hijack_trim_duplication_recipes.tooltip": "Try to make every template recipe cheaper\nRequires a data pack reload to take effect",
+
+  "subtitles.trimeffectively.wavefunction_collapse": "Wavefunction Collapse",
+  "subtitles.trimeffectively.glitch": "Glitch"
 }

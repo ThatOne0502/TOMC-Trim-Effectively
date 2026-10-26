@@ -1,0 +1,10 @@
+{
+  "material": "minecraft:emerald",
+  "effects": [
+    {
+      "type": "trimeffectively:trade_price",
+      "trigger": "trimeffectively:trade",
+      "amount": { "value": -0.10, "stack": "per_piece" }
+    }
+  ]
+}

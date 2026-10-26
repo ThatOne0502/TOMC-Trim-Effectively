@@ -9,7 +9,9 @@ import io.github.thatone0502.trimeffectively.effect.TreConditions;
 import io.github.thatone0502.trimeffectively.engine.PortalTracker;
 import io.github.thatone0502.trimeffectively.engine.TreEngine;
 import io.github.thatone0502.trimeffectively.net.TreConfigSync;
+import io.github.thatone0502.trimeffectively.net.TreGlitchSync;
 import io.github.thatone0502.trimeffectively.recipe.TreRecipeSerializers;
+import io.github.thatone0502.trimeffectively.sound.TreSounds;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ public class Trimeffectively implements ModInitializer {
 		// (including our own, and including other mods' data) is decoded.
 		TreConditions.init();
 		TreAttributes.init();
+		TreSounds.init();
 		TrimComponents.init();
 		// Must precede the datapack load for the same reason: a recipe JSON naming a serializer that does not
 		// exist yet fails to decode.
@@ -35,6 +38,8 @@ public class Trimeffectively implements ModInitializer {
 		// Reads the config before anything can consult it (TreRecipes asks on every recipe reload anyway), and
 		// registers the S2C payload so a joining client learns what this world is running.
 		TreConfigSync.register();
+		// The other S2C payload: a glitch burst is announced when a hit lands, and the client has to know the type.
+		TreGlitchSync.register();
 		LOGGER.info("TOMC-Trim Effectively loaded");
 	}
 }

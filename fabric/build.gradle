@@ -7,7 +7,7 @@ group = "io.github.thatone0502.trimeffectively"
 
 // ---------------------------------------------------------------------------
 // 构建命名：tomc-<modid>-<maj>.<min>.<rev>.<build>-<platform>+mc<mcver>.jar
-// 例：tomc-trimeffectively-0.1.0.1-fabric+mc1.21.11.jar
+// 例：tomc-trimeffectively-0.2.0.1-fabric+mc1.21.11.jar
 //
 // 版本号前三段由人工维护；第四段（构建次数）自动累计。
 // 计数存在项目根的 build-count.txt，相对 build/ 目录独立，clean 不会重置。
@@ -16,7 +16,7 @@ group = "io.github.thatone0502.trimeffectively"
 // ---------------------------------------------------------------------------
 ext.mcVersion = '1.21.11'
 ext.platform = 'fabric'
-ext.baseVersion = '0.1.0'
+ext.baseVersion = '0.2.0'
 
 def countFile = file('build-count.txt')
 def buildNumber = (countFile.exists() ? countFile.text.trim().toInteger() : 0) + 1

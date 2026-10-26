@@ -34,6 +34,10 @@
     "WitherBossMixin"
   ],
   "client": [
+    "LivingEntityRendererTwitchMixin",
+    "LivingEntityRenderStateTwitchMixin",
+    "ModelPartGlitchMixin",
+    "SoundEngineDedupeMixin",
     "SoundManagerAnnotateMixin"
   ],
   "injectors": {

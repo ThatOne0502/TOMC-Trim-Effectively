@@ -1,0 +1,14 @@
+{
+  "pattern": "minecraft:vex",
+  "effects": [
+    {
+      "type": "trimeffectively:summon",
+      "trigger": "trimeffectively:take_damage_after",
+      "entity": "minecraft:vex",
+      "count": { "value": 1, "stack": "per_piece" },
+      "lifetime": { "value": 1.0, "per": ["damage_taken"], "stack": "once" },
+      "inherit_equipment": true,
+      "attack_target": "attacker"
+    }
+  ]
+}

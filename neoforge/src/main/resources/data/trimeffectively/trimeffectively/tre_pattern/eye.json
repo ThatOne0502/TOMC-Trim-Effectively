@@ -1,0 +1,14 @@
+{
+  "pattern": "minecraft:eye",
+  "effects": [
+    {
+      "type": "trimeffectively:apply_mob_effect",
+      "trigger": "trimeffectively:attack_out",
+      "effect": "trimeffectively:endphase",
+      "chance": { "value": 0.1, "stack": "per_piece" },
+      "duration": { "value": 28.284271247461902, "per": ["damage_dealt"], "power": 0.5, "stack": "per_piece", "min": 0 },
+      "amplifier": { "value": 0, "stack": "once" },
+      "target": "victim"
+    }
+  ]
+}

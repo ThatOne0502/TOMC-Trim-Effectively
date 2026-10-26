@@ -1,0 +1,28 @@
+{
+  "material": "minecraft:netherite",
+  "effects": [
+    {
+      "type": "trimeffectively:damage_in",
+      "trigger": "trimeffectively:take_damage_before",
+      "amount": { "value": -0.16, "stack": "per_piece" },
+      "conditions": [
+        {
+          "condition": "minecraft:damage_source_properties",
+          "predicate": { "tags": [ { "id": "minecraft:is_fire", "expected": true } ] }
+        }
+      ]
+    },
+    {
+      "type": "trimeffectively:attribute",
+      "attribute": "minecraft:burning_time",
+      "operation": "add_multiplied_base",
+      "amount": { "value": -0.30, "stack": "per_piece" }
+    },
+    {
+      "type": "trimeffectively:item_property",
+      "properties": {
+        "fire_resistant": true
+      }
+    }
+  ]
+}
