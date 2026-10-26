@@ -2,7 +2,7 @@
 
 # Changelog: TOMC-Trim Effectively
 
-> Versions are `major.minor.build`. The build number is a counter of successful builds, not a semantic version — a higher number promises nothing about compatibility, it only means one more build happened.
+> Versions are `major.minor.fix.build`. The build number is a counter of successful builds, not a semantic version — a higher number promises nothing about compatibility, it only means one more build happened.
 > The `mc1.21.11` and `mc26.1.2` suffixes on the jar name are the target game versions. The same version number carries the same features on both.
 > Only changes a player or a pack author can notice are listed here. The full description of effects and data is in [docs/CONTENT.en.md](docs/CONTENT.en.md) and [docs/DATA.en.md](docs/DATA.en.md); the reasoning behind the design is in [docs/DESIGN.en.md](docs/DESIGN.en.md) and [docs/INTERNALS.en.md](docs/INTERNALS.en.md).
 > The format follows Keep a Changelog. No dates: these build numbers come from a build counter, and there is no trustworthy release date to write down.
